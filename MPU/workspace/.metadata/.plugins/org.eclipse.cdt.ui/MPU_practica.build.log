@@ -1,0 +1,6 @@
+19:43:25 **** Incremental Build of configuration Debug for project MPU_practica ****
+make -r all 
+make: No se hace nada para «all».
+
+19:43:25 Build Finished (took 94ms)
+

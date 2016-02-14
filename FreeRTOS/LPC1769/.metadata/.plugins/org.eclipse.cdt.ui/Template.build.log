@@ -1,0 +1,16 @@
+20:01:55 **** Incremental Build of configuration Debug for project Template ****
+make all 
+Building target: Template.axf
+Invoking: MCU Linker
+arm-none-eabi-gcc -nostdlib -L"C:\wsRTO\Lib_FreeRTOS_7p0p1\Debug_LPC176x" -L"C:\wsRTO\CMSISv2p00_LPC17xx\Debug" -L"C:\wsRTO\Lib_API_CAPI\Debug" -L"C:\wsRTO\Lib_Contenedores\Debug" -L"C:\wsRTO\Lib_MCU_LPC176x\Debug" -Xlinker -Map="Template.map" -Xlinker --gc-sections -mcpu=cortex-m3 -mthumb -T "Template_Debug.ld" -o "Template.axf"  ./src/cr_startup_lpc17.o ./src/main.o   -lLib_FreeRTOS_7p0p1 -lCMSISv2p00_LPC17xx -lLib_API_CAPI -lLib_Contenedores -lLib_MCU_LPC176x
+Finished building target: Template.axf
+ 
+make --no-print-directory post-build
+Performing post-build steps
+arm-none-eabi-size "Template.axf"; # arm-none-eabi-objcopy -O binary "Template.axf" "Template.bin" ; checksum -p LPC1769 -d "Template.bin";
+   text	   data	    bss	    dec	    hex	filename
+  15616	     16	  19016	  34648	   8758	Template.axf
+ 
+
+20:01:56 Build Finished (took 855ms)
+

@@ -1,0 +1,22 @@
+/*
+ * mpu.c
+ *
+ *  Created on: 14/03/2013
+ *      Author: PR
+ *
+ *
+ */
+#include "mpu.h"
+#include "mem_sections.h"
+
+#define mpuDisable() {MPU->CTRL = 0;}
+#define mpuEnable() {MPU->CTRL = 5;}
+
+void mpuSetup(void)
+{
+}
+
+void mpuReadTest(uint32_t *mem)
+{
+	int i = &mem;
+}

@@ -1,0 +1,237 @@
+/* Ejercicio integrador: Control de Bicicleta.
+ *
+ *
+ */
+
+/* FreeRTOS.org includes. */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+#include "queue.h"
+
+#include "FrameworkEventos.h"
+#include "baseboard.h"
+
+
+#include "definiciones.h"
+#include "eventos.h"
+
+#include "Salud/salud_control.h"
+#include "Robo/robo_control.h"
+#include "Configuracion/configuracion_control.h"
+#include "Estadisticas/estadisticas_control.h"
+#include "Drivers/InterfazHumana/interfazHumana.h"
+#include "Drivers/Interrupcion/Interrupcion.h"
+#include "Drivers/Alarma/Alarma.h"
+#include "Drivers/CuentaVueltas/CuentaVueltas.h"
+#include "globales.h"
+
+#include "GPIO.h"
+#include "UART.h"
+
+#include "lpc_176X_PeriphNames.h"
+#include "lpc_176X_PinNames.h"
+
+
+UART consolaBT;
+
+
+
+Modulo_t * ModuloConfiguracion;
+Modulo_t * ModuloEstadistico;
+Modulo_t * ModuloControlSalud;
+Modulo_t * ModuloControlRobo;
+
+GPIO Pulsador1;
+GPIO JoystickArriba;
+GPIO JoystickAbajo;
+GPIO JoystickDerecha;
+portTickType ContarTicksVueltas;
+portTickType ContarTicksSalud;
+xQueueHandle colaControlSirena;
+xQueueHandle colaVueltas;
+xQueueHandle colaPulsacion;
+xSemaphoreHandle rupturaCadena;
+xSemaphoreHandle botonRobo;
+
+static void setupHardware(void)
+{
+	//GPIO_Init(&led, SALIDA, ALTO, GPIO__0_22);
+	UARTInit(&consolaBT, UART_2, 9600, 8, 'n', 1);
+	//UARTInit(&consolaDebug, UART_2, 115200, 8, 'n', 1);
+	//consolaDebug = consolaBT;
+	UARTInitDEBUG();
+	initconsola(&consolaBT);
+
+/***Configuracion de los pulsadores para simular entradas
+
+	/* Pulsador en P0.4, lo usamos por interrupcion y simulamos el cuenta vueltas*/
+	GPIO_Init(&Pulsador1, ENTRADA, BAJO, EABASE_SW3_REV_A);
+	/* Pulsador en P2.3, lo usamos por interrupcion y simulamos pulsacion cardiaca*/
+	GPIO_Init(&JoystickAbajo, ENTRADA, BAJO, GPIO__2_3 );
+	/* Pulsador en P2.4, lo usamos por interrupcion y simulamos integridad cadena*/
+	GPIO_Init(&JoystickArriba, ENTRADA, BAJO, GPIO__2_4 );
+	/* Pulsador en P2.4, lo usamos por interrupcion y simulamos Boton Robo*/
+	GPIO_Init(&JoystickDerecha, ENTRADA, BAJO, GPIO__2_5 );
+
+	/* Configuro interrupcion de P0.4 */
+	LPC_GPIOINT->IO0IntEnF |= 1 << 4; //Configuro solo que se ejecute la INT cuando en Falling edge
+	/* Configuro interrupcion de P2.3 */
+	LPC_GPIOINT->IO2IntEnF |= 1 << 3; //Configuro solo que se ejecute la INT cuando en Falling edge
+	/* Configuro interrupcion de P2.4 */
+	LPC_GPIOINT->IO2IntEnF |= 1 << 4; //Configuro solo que se ejecute la INT cuando en Falling edge
+	/* Configuro interrupcion de P2.4 */
+	LPC_GPIOINT->IO2IntEnF |= 1 << 5; //Configuro solo que se ejecute la INT cuando en Falling edge
+
+	NVIC_EnableIRQ(EINT3_IRQn);
+
+}
+
+/*
+ * **********************************************************************************************************
+ */
+
+void taskAccel(void *pvParameters)
+{
+	int Accel_XYZ[3];
+
+	Init_Accel();
+	while(1)
+	{
+		readAccelSimple(&Accel_XYZ);
+		vTaskDelay(100/portTICK_RATE_MS);
+	}
+}
+
+int main(void)
+{
+	//Incialización del Hardware
+	setupHardware();
+
+	//Trace del RTOS
+	//traceSTART();
+
+	//Creación de las tareas
+	xTaskCreate(taskAccel,
+			(const signed char * const)"taskAccel",
+			configMINIMAL_STACK_SIZE,
+			NULL,
+			tskIDLE_PRIORITY+1,
+			NULL);
+
+	//Inicio el Scheduler
+	vTaskStartScheduler();
+
+	while(1);
+}
+
+/*
+ * **********************************************************************************************************
+ */
+
+//-----------------------------------------------------------------------------
+
+int main2( void )
+{
+    initBaseBoard();
+	//UARTInit(&consola, UART_3, 115200, 8, 'n', 1);
+    setupHardware();
+
+	UARTputsDEBUG("Inicio Aplicacion.\r\n");
+
+	colaEventosPrioridadBaja = xQueueCreate(L_COLA_EVENTOS, sizeof(Evento_t));
+
+	colaEventosDrivers = xQueueCreate(L_COLA_EVENTOS, sizeof(EventoDriver_t));
+
+	//Cola necesaria para comunicar los mensajes de salud
+	colaMensajesUsuarios = xQueueCreate(L_COLA_EVENTOS, sizeof(DatosDriver_t));
+
+	//Cola necesaria para comunicarse con la tarea que maneja la SIRENA
+	colaControlSirena = xQueueCreate(L_COLA_EVENTOS, sizeof(Evento_t));
+
+	//Cola necesaria para comunicarse la interrupcion de vuelta con la tarea manejadora de vueltas
+	colaVueltas = xQueueCreate(L_COLA_EVENTOS, sizeof(Evento_t));
+
+	//Cola necesaria para comunicarse la interrupcion de pulsacion con la tarea manejadora de pulsacion
+	colaPulsacion = xQueueCreate(L_COLA_EVENTOS, sizeof(Evento_t));
+
+	//Semaforo necesario para permitir el lanzamiento de la tarea manejadora de ruptura Cadena
+	vSemaphoreCreateBinary(rupturaCadena);
+
+	//Semaforo necesario para permitir el lanzamiento de la tarea manejadora del boton de robo
+	vSemaphoreCreateBinary(botonRobo);
+
+    // Creo la tarea de baja prioridad
+    xTaskCreate(
+    		TareaDespachadoraEventos,			/* Pointer to the function that implements the task. */
+			"Control",							/* Text name for the task.  This is to facilitate debugging only. */
+			7 * configMINIMAL_STACK_SIZE,		/* Stack depth in words. */
+			(void*) colaEventosDrivers,	/* Parametro de la tarea */
+			PRIORIDAD_BAJA,						/* Prioridad */
+			NULL );								/* Task handle. */
+
+	xTaskCreate(	interfazHumana,
+					(const signed char * const)"interfazHumana",
+					configMINIMAL_STACK_SIZE,
+					NULL,
+					PRIORIDAD_BAJA,
+					NULL );
+
+	xTaskCreate(	SirenaInterface,
+					(const signed char * const)"SirenaInterface",
+					configMINIMAL_STACK_SIZE,
+					(void*) colaControlSirena,
+					PRIORIDAD_MEDIA,
+					NULL );
+
+	xTaskCreate(	CuentaVueltasInterface,
+					(const signed char * const)"CuentaVueltasInterface",
+					configMINIMAL_STACK_SIZE,
+					(void*) colaVueltas,
+					PRIORIDAD_MEDIA,
+					NULL );
+
+	xTaskCreate(	MedidorPulsacionCardiacaInterface,
+					(const signed char * const)"MedidorPulsacionCardiacaInterface",
+					configMINIMAL_STACK_SIZE,
+					(void*) colaPulsacion,
+					PRIORIDAD_MEDIA,
+					NULL );
+
+	xTaskCreate(	IntegridadCadenaInterface,
+					(const signed char * const)"IntegridadCadenaInterface",
+					configMINIMAL_STACK_SIZE,
+					(void*) rupturaCadena,
+					PRIORIDAD_MEDIA,
+					NULL );
+
+	xTaskCreate(	BotonActivacionAlarmaInterface,
+					(const signed char * const)"BotonActivacionAlarmaInterface",
+					configMINIMAL_STACK_SIZE,
+					(void*) botonRobo,
+					PRIORIDAD_MEDIA,
+					NULL );
+
+    ModuloConfiguracion     = RegistrarModulo(ManejadorEventosConfiguracion, 	PRIORIDAD_BAJA);
+    ModuloEstadistico		= RegistrarModulo(ManejadorEventosControlEstadisticas,	PRIORIDAD_BAJA);
+    ModuloControlSalud		= RegistrarModulo(ManejadorEventosControlSalud,	PRIORIDAD_BAJA);
+    ModuloControlRobo		= RegistrarModulo(ManejadorEventosControlRobo,	PRIORIDAD_BAJA);
+
+    IniciarTodosLosModulos();
+    ContarTicksVueltas = 0;
+    ContarTicksSalud = 0;
+    vTaskStartScheduler();
+
+    /* If all is well we will never reach here as the scheduler will now be
+	running.  If we do reach here then it is likely that there was insufficient
+	heap available for the idle task to be created. */
+    for(;;);
+	return 0;
+}
+
+void vApplicationIdleHook ( void )
+{
+	__WFI();
+}
+
+//Esta aplicacion usa el vApplitactionTickHook para implementar el servicio de timeouts

@@ -1,0 +1,96 @@
+/*
+ * mpu.c
+ *
+ *  Created on: 14/03/2013
+ *      Author: PR
+ *
+ *
+ */
+#include "mpu.h"
+#include "mem_sections.h"
+
+#define mpuDisable() {MPU->CTRL = 0;}
+#define mpuEnable() {MPU->CTRL = 5;}
+#define USER_STACK_SIZE 0x08
+
+mpuRegionSize_e mpuRegionSizeEncoding(unsigned int regionSize)
+{
+	mpuRegionSize_e i;
+	for(i=MPU_REGION_SIZE_RESERVED0; i<=MPU_REGION_SIZE_4G; i++)
+	{
+		if((1<<(i+1))==regionSize)
+			return i;
+	}
+	return (mpuRegionSize_e)-1;
+}
+
+void mpuRegionSetup(unsigned int addr, unsigned int region,
+		mpuRegionSize_e size, mpuAccessPermission_e ap, mpuMemoryAttributes attrib,
+		unsigned int srd, unsigned int xn, unsigned int enable)
+{
+	// Setup procedure for each region
+	MPU->RBAR = (addr & 0xFFFFFFE0) | (region & 0xF) | 0x10;
+	MPU->RASR = ((xn & 0x1)<<28) | ((ap & 0x7)<<24) |
+			((attrib & 0x3F)<<16) | ((srd&0xFF)<<8) |
+			((size & 0x1F)<<1)| (enable & 0x1);
+	return;
+}
+
+void mpuRegionDisable(unsigned int region)
+{
+	// Function to disable an unused region
+	MPU->RBAR = (region & 0xF) | 0x10;
+	MPU->RASR = 0; // disable
+	return;
+}
+
+void mpuSetup(void)
+{
+	int *pnt, x;
+
+
+	pnt = CODE_MEMORY_2;
+	x = *pnt;
+
+	/* La MPU se configura para dar acceso en modo no privilegiado solamente
+	 * a la memoria de código, la RAM de variables globales de usuario y la
+	 * región de periféricos. El resto queda inaccesible en modo no privilegiado
+	 * usando la background region.
+	 * Luego, en cada cambio de contexto se habilita una región adicional para la
+	 * pila del hilo a ser ejecutado.
+	 */
+
+	MPU->CTRL = 0; // Disable MPU first
+
+	/* Regions 0 and 1: Code memory */
+	mpuRegionSetup(CODE_MEMORY_1, 0, mpuRegionSizeEncoding(CODE_MEMORY_1_LEN),
+			MPU_AP_FULL_ACCESS, MPU_ATTR_ROM_tex_sCb, 0, 0, 1);
+
+	mpuRegionSetup(CODE_MEMORY_2, 1, mpuRegionSizeEncoding(CODE_MEMORY_2_LEN),
+				MPU_AP_NO_ACCESS, MPU_ATTR_ROM_tex_sCb, 0, 0, 1);
+
+	mpuRegionDisable(2);
+	mpuRegionDisable(3);
+	mpuRegionDisable(4);
+	mpuRegionDisable(5);
+	mpuRegionDisable(6);
+	mpuRegionDisable(7);
+
+	MPU->CTRL = 5; 	// Enable MPU with Default memory map enabled
+					// for privileged accesses
+
+	pnt = CODE_MEMORY_1;
+	x = *pnt;
+	*pnt = x + 1;
+
+	return;
+}
+
+void mpuStackRegionConfig(uint32_t * stack)
+{
+	/* Region 5: Pagina asignada */
+	MPU->CTRL = 0;
+	mpuRegionSetup((unsigned int)stack, 5, mpuRegionSizeEncoding(USER_STACK_SIZE),
+			MPU_AP_FULL_ACCESS, MPU_ATTR_INT_SRAM_tex_SCb, 0, 1, 1);
+	MPU->CTRL = 5;
+}

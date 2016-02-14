@@ -1,0 +1,30 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../src/MPU_test.c \
+../src/crp.c \
+../src/mpu.c 
+
+OBJS += \
+./src/MPU_test.o \
+./src/crp.o \
+./src/mpu.o 
+
+C_DEPS += \
+./src/MPU_test.d \
+./src/crp.d \
+./src/mpu.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+src/%.o: ../src/%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: MCU C Compiler'
+	arm-none-eabi-gcc -DDEBUG -D__CODE_RED -DCORE_M3 -D__LPC177X_8X__ -D__REDLIB__ -I"/home/carlos/FIUBA/MPU/workspace/Lib_MCU_LPC176x" -I"/home/carlos/FIUBA/MPU/workspace/Lib_Contenedores" -I"/home/carlos/FIUBA/MPU/workspace/Lib_API_CAPI" -I"/home/carlos/FIUBA/MPU/workspace/CMSISv2p00_LPC17xx" -O0 -g3 -Wall -c -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections -mcpu=cortex-m3 -mthumb -specs=redlib.specs -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+

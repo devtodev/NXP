@@ -1,0 +1,40 @@
+/*
+===============================================================================
+ Name        : MPU_test.c
+ Author      : $(author)
+ Version     :
+ Copyright   : $(copyright)
+ Description : main definition
+===============================================================================
+*/
+
+#include "mpu.h"
+#define __USE_CMSIS 1
+
+#ifdef __USE_CMSIS
+#include "LPC177x_8x.h"
+#endif
+
+#include <core_cm3.h>
+#include <cr_section_macros.h>
+
+// TODO: insert other include files here
+
+// TODO: insert other definitions and declarations here
+
+int main(void) {
+
+	//MPU
+	mpuSetup();
+
+	//Activate MemFault, UsageFault and BusFault handlers
+	SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
+
+    // Force the counter to be placed into memory
+    volatile static int i = 0 ;
+    // Enter an infinite loop, just incrementing a counter
+    while(1) {
+        i++ ;
+    }
+    return 0 ;
+}

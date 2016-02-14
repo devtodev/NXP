@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.debug.2135264437/BOARD/delimiter=\:
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.debug.2135264437/BOARD/operation=append
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.debug.2135264437/BOARD/value=edu_ciaa_nxp
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.debug.2135264437/append=true
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.debug.2135264437/appendContributed=true
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.1203116109/BOARD/delimiter=\:
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.1203116109/BOARD/operation=append
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.1203116109/BOARD/value=edu_ciaa_nxp
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.1203116109/append=true
+environment/project/ilg.gnuarmeclipse.managedbuild.cross.config.lib.release.1203116109/appendContributed=true

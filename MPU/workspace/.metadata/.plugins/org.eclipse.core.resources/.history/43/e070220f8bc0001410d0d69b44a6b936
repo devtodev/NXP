@@ -1,0 +1,43 @@
+/*
+===============================================================================
+ Name        : MPU_test.c
+ Author      : $(author)
+ Version     :
+ Copyright   : $(copyright)
+ Description : main definition
+===============================================================================
+*/
+
+#include "mpu.h"
+
+#define __USE_CMSIS 1
+
+#include "LPC17xx.h"
+#include "core_cm3.h"
+#include <cr_section_macros.h>
+
+// TODO: insert other include files here
+
+// TODO: insert other definitions and declarations here
+
+int main(void) {
+
+	//MPU
+	mpuSetup();
+
+	//Activate MemFault, UsageFault and BusFault handlers
+//	SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
+
+	   /* Disable MPU */
+	   MPU->CTRL = 0;
+	   /* Configure region 0 to cover 512KB Flash (Normal, Non-Shared, Executable, Read-only) */
+	   MPU->RBAR = 0x00000000 | REGION_Valid | 0;
+	   MPU->RASR = REGION_Enabled | NORMAL | REGION_512K | RO;
+    // Force the counter to be placed into memory
+    volatile static int i = 0 ;
+    // Enter an infinite loop, just incrementing a counter
+    while(1) {
+        i++ ;
+    }
+    return 0 ;
+}

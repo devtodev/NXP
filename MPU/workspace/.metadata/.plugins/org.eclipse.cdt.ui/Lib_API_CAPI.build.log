@@ -1,0 +1,6 @@
+19:42:06 **** Incremental Build of configuration Debug for project Lib_API_CAPI ****
+make -r all 
+make: No se hace nada para «all».
+
+19:42:06 Build Finished (took 78ms)
+

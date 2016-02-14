@@ -1,0 +1,120 @@
+/*
+ * mpu.c
+ *
+ *  Created on: 14/03/2013
+ *      Author: PR
+ *
+ *
+ */
+
+#include "mpu.h"
+
+
+#define mpuDisable() {MPU->CTRL = 0;}
+#define mpuEnable() {MPU->CTRL = 5;}
+
+void mpuSetup(void)
+{
+	/* - Region 0: 0x00000000 - 0x0007FFFF --- on-chip non-volatile memory
+	 * + Size: 512kB
+	 * + Acess permission: full access
+	 */
+	MPU->RNR = 0;//indicate MPU region 0
+	MPU->RBAR = 0x00000000; // update the base address for the region 0
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS) //full access
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_512KB) //512Kb size
+		|MPU_REGION_ENABLE; //region enable
+	/* - Region 1: 0x10000000 - 0x10007FFF --- on-chip SRAM
+	 * + Size: 32kB
+	 * + Access permission: full access
+	 */
+	MPU->RNR = 1;
+	MPU->RBAR = 0x10000000; // update the base address for the region 1
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_32KB)
+		|MPU_REGION_ENABLE;
+	/* - Region 2: 0x40000000 - 0x400FFFFF --- APB peripheral
+	 * + Size: 1MB
+	 * + Access permission: full access
+	 */
+	MPU->RNR = 2;
+	MPU->RBAR = 0x40000000; // update the base address for the region 2
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_1MB)
+		|MPU_REGION_ENABLE;
+	/* - Region 3: 0x50000000 - 0x501FFFFF --- AHB peripheral
+	 * + Size: 2MB
+	 * + AP=b011: full access
+	 */
+	MPU->RNR = 3;
+	MPU->RBAR = 0x50000000; // update the base address for the region 3
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_2MB)
+		|MPU_REGION_ENABLE;
+	/* - Region 4: 0xE0000000 - 0xE00FFFFF --- System control
+	 * + Size: 1MB
+	 * + Access permission: full access
+	 */
+	MPU->RNR = 4;
+	MPU->RBAR = 0xE0000000; // update the base address for the region 4
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_1MB)
+		|MPU_REGION_ENABLE;
+	/* - Region 5:0x2007C000 - 0x2007FFFF --- on chip SRAM
+	 * + Size: 16kB
+	 * + Access permission: full access
+	 */
+	MPU->RNR = 5;
+	MPU->RBAR = 0x2007C000; // update the base address for the region 5
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_16KB)
+		|MPU_REGION_ENABLE;
+	/* - Region 6: 0x20080000 - 0x20083FFF --- on chip SRAM
+	 * + Size: 16kB
+	 * + Access permission: no access
+	 */
+	MPU->RNR = 6;
+	MPU->RBAR = 0x20080000; // update the base address for the region 6
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_NO_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_16KB)
+		|MPU_REGION_ENABLE;
+	/* - Region 5:0x2009C000 - 0x2009FFFF --- GPIO peripheral
+	 * + Size: 16kB
+	 * + Access permission: full access
+	 */
+	MPU->RNR = 7;
+	MPU->RBAR = 0x2009C000; // update the base address for the region 6
+	MPU->RASR = MPU_RASR_ACCESS_PERMISSION(MPU_FULL_ACCESS)
+		|MPU_RASR_REGION_SIZE(MPU_REGION_SIZE_16KB)
+		|MPU_REGION_ENABLE;
+	_DBG_("Setup MPU: \n\r"
+			"This provide 8 regions: \n\r"
+			"Region 0 - Privileged code: 0x00000000 - 0x0007FFFF(512kB)\n\r"
+			"Region 1 - Privileged data: 0x10000000 - 0x10007FFF(32kB)\n\r"
+			"Region 2 - APB Peripheral: 0x40000000 - 0x400FFFFF(1MB)\n\r"
+			"Region 3 - AHB peripheral: 0x50000000 - 0x501FFFFF(2MB)\n\r"
+			"Region 4 - System control: 0xE0000000 - 0xE00FFFFF(1MB)\n\r"
+			"Region 5 - On-chip SRAM: 0x2007C000 - 0x2007FFFF(16kB)\n\r"
+			"Region 6 - Private SRAM: 0x20080000 - 0x20083FFF(16kB)\n\r"
+			"Region 7 - GPIO peripheral: 0x2009C000 - 0x2009FFFF(16Kb)\n\r"
+			"Region 6 can not access (just used for testing)");
+	SCB->SHCSR |=(1<<16); //Enable Memory management fault
+	MPU->CTRL =(1<<0); //Enable the MPU
+	_DBG_("Enable MPU!");
+	//try to access to this memory range
+	_DBG_("Press '1' to try to read memory from region 1");
+
+	test = (*(unsigned int *)0x10000000);
+	_DBG_("Read successful!!!");
+	_DBG_("Press '2' to try to read memory from region 6\n\r"
+			"Read memory at this region is not allow, LED p1.28 will blink...");
+	test = (*(unsigned int *)0x20080004);
+	test++;
+	while(test);
+	return 1;
+}
+
+void mpuReadTest(uint32_t *mem)
+{
+	int i = &mem;
+}

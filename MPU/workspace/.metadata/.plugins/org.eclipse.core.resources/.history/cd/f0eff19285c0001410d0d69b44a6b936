@@ -1,0 +1,65 @@
+/*
+ * MPU_tests.h
+ *
+ *  Created on: 18/2/2015
+ *      Author: charles
+ */
+
+#ifndef MPU_TESTS_H_
+#define MPU_TESTS_H_
+
+/*Includes del FreeRTOS*/
+#include "FreeRTOS.h"
+#include "mpu_wrappers.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include "basic_io.h"
+
+int* fueraDelPropioStack;
+
+int getFueraDelPropioStack();
+int getDelBoot();
+void taskPrivilegioAccesoAMemoria(void * pvParameters);
+void taskUsuarioAccesoAMemoria(void * pvParameters);
+void taskLed(void * pvParameters);
+
+/* Declare the stack that will be used by the task.  The stack alignment must
+match its size and be a power of 2, so if 128 words are reserved for the stack
+then it must be aligned to ( 128 * 4 ) bytes.  This example used GCC syntax. */
+static portSTACK_TYPE xTaskStackUsuario[ 128 ] __attribute__((aligned(128*4)));
+static portSTACK_TYPE xTaskStackPrivilegio[ 128 ] __attribute__((aligned(128*4)));
+
+
+typedef struct xTASK_PARAMETERS
+{
+	pdTASK_CODE pvTaskCode;
+    const signed char * const pcName;
+    unsigned short usStackDepth;
+    void *pvParameters;
+	unsigned portBASE_TYPE uxPriority;
+	portSTACK_TYPE *puxStackBuffer;
+	xMemoryRegion xRegions[ portNUM_CONFIGURABLE_REGIONS ];
+} TaskParameters_t;
+
+static const TaskParameters_t taskModoUsuario =
+{
+    taskUsuarioAccesoAMemoria,   		 /* pvTaskCode */
+    "xTaskUsuarioAccesoAMemoria",        /* pcName */
+	configMINIMAL_STACK_SIZE,            /* usStackDepth - defined in words, not bytes. */
+    NULL,            					 /* pvParameters */
+	1,               					 /* uxPriority - priority 1, start in User mode. */
+    xTaskStackUsuario,      			 /* puxStackBuffer - the array to use as the task stack. */
+
+    /* xRegions - In this case only one of the three user definable regions is
+    actually used.  The parameters are used to set the region to read only. */
+    {
+        /* Base address   Length                    Parameters */
+        { 0, 			  0, 						0						 },
+        { 0,	          0,                        0                        },
+        { 0,	          0,                        0                        },
+    }
+};
+
+
+#endif /* MPU_TESTS_H_ */

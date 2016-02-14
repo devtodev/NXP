@@ -1,0 +1,84 @@
+/*
+ * mpu.h
+ *
+ *  Created on: 14/03/2013
+ *      Author: PR
+ */
+
+#ifndef MPU_H_
+#define MPU_H_
+
+#include "LPC17xx.h"
+
+#define USER_STACK_SIZE 256
+
+typedef struct _mpuThreadContext
+{
+	uint32_t dataAddr;
+	uint32_t periAddr;
+}mpuContext_t;
+
+typedef enum _mpuRegionSize_e
+{
+	MPU_REGION_SIZE_RESERVED0,
+	MPU_REGION_SIZE_RESERVED1,
+	MPU_REGION_SIZE_RESERVED2,
+	MPU_REGION_SIZE_RESERVED3,
+	MPU_REGION_SIZE_32,
+	MPU_REGION_SIZE_64,
+	MPU_REGION_SIZE_128,
+	MPU_REGION_SIZE_256,
+	MPU_REGION_SIZE_512,
+	MPU_REGION_SIZE_1k,
+	MPU_REGION_SIZE_2k,
+	MPU_REGION_SIZE_4k,
+	MPU_REGION_SIZE_8k,
+	MPU_REGION_SIZE_16k,
+	MPU_REGION_SIZE_32k,
+	MPU_REGION_SIZE_64k,
+	MPU_REGION_SIZE_128k,
+	MPU_REGION_SIZE_256k,
+	MPU_REGION_SIZE_512k,
+	MPU_REGION_SIZE_1M,
+	MPU_REGION_SIZE_2M,
+	MPU_REGION_SIZE_4M,
+	MPU_REGION_SIZE_8M,
+	MPU_REGION_SIZE_16M,
+	MPU_REGION_SIZE_32M,
+	MPU_REGION_SIZE_64M,
+	MPU_REGION_SIZE_128M,
+	MPU_REGION_SIZE_256M,
+	MPU_REGION_SIZE_512M,
+	MPU_REGION_SIZE_1G,
+	MPU_REGION_SIZE_2G,
+	MPU_REGION_SIZE_4G
+}mpuRegionSize_e;
+
+typedef enum _mpuAccessPermission_e
+{
+	MPU_AP_NO_ACCESS,
+	MPU_AP_PRIVILEGED_ONLY,
+	MPU_AP_USER_READ_ONLY,
+	MPU_AP_FULL_ACCESS,
+	MPU_AP_UNPREDICTABLE,
+	MPU_AP_PRIVILEGED_READ_ONLY,
+	MPU_AP_READ_ONLY_6,
+	MPU_AP_READ_ONLY_7
+}mpuAccessPermission_e;
+
+typedef enum _mpuMemoryAttributes_
+{
+	MPU_ATTR_ROM_tex_sCb 		= 0b000010,
+	MPU_ATTR_PERIPH_tex_Scb		= 0b000100,
+	MPU_ATTR_PERIPH_tex_ScB	  	= 0b000101,
+	MPU_ATTR_INT_SRAM_tex_SCb 	= 0b000110,
+	MPU_ATTR_EXT_SRAM_tex_SCB 	= 0b000111
+}mpuMemoryAttributes;
+
+#define mpuRegionSizeToBytes(reg_size) (1 <<((reg_size)+1))
+
+void mpuSetup(void);
+void mpuStackRegionConfig(uint32_t * stack);
+mpuRegionSize_e mpuRegionSizeEncoding(unsigned int regionSize);
+
+#endif /* MPU_H_ */

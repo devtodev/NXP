@@ -1,0 +1,30 @@
+/*
+ * driver.h
+ *
+ *  Created on: 27/07/2014
+ *      Author: alejandro, carlos
+ */
+
+#ifndef DRIVER_H_
+#define DRIVER_H_
+
+#define EVENT_NUEVA_INCLINACION   		 0
+#define EVENT_SHOCK_DETECTADO  	   		 1
+#define EVENT_NUEVA_VELOCIDAD    		10
+#define EVENT_ROPTURA_CADENA     		20
+#define EVENT_NUEVA_PULSACIONES  		30
+#define EVENT_BOTON_ACTIVACION_ALARMA  40
+#define EVENT_HI_MODO_ESTACIONADO_ACTIVO      50
+#define EVENT_HI_MODO_ESTACIONADO_DESACTIVO 51
+#define EVENT_HI_MODO_CONFIGURACION_ENTRAR	 52
+#define EVENT_HI_MODO_CONFIGURACION_SALIR	 53
+#define EVENT_HI_MENU_SET_RODADO	 54
+#define EVENT_HI_MENU_SET_VELOCIDAD_MAX	 55
+#define EVENT_HI_MENU_SET_INCLINACION_MAX	 56
+#define EVENT_HI_MENU_SET_PULSACIONES_MAX	 57
+
+#define EVENT_INFORMACION_DATOS_ACTUALES	 99
+
+void ponerEnColaEventos(int evento, int dato);
+
+#endif /* DRIVER_H_ */

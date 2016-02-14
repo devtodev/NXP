@@ -1,0 +1,15 @@
+src/MPU_test.o src/MPU_test.d: ../src/MPU_test.c ../src/mpu.h \
+ ../src/LPC17xx.h ../src/core_cm3.h ../src/core_cmInstr.h \
+ ../src/core_cmFunc.h ../src/system_LPC17xx.h
+
+../src/mpu.h:
+
+../src/LPC17xx.h:
+
+../src/core_cm3.h:
+
+../src/core_cmInstr.h:
+
+../src/core_cmFunc.h:
+
+../src/system_LPC17xx.h:

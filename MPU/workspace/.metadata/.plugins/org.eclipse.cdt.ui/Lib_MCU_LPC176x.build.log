@@ -1,0 +1,6 @@
+19:42:07 **** Incremental Build of configuration Debug for project Lib_MCU_LPC176x ****
+make -r all 
+make: No se hace nada para «all».
+
+19:42:07 Build Finished (took 93ms)
+

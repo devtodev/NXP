@@ -1,0 +1,56 @@
+/*
+===============================================================================
+ Name        : main.c
+ Author      : 
+ Version     :
+ Copyright   : Copyright (C) 
+ Description : main definition
+===============================================================================
+*/
+
+#ifdef __USE_CMSIS
+#include "LPC17xx.h"
+#endif
+
+#include <cr_section_macros.h>
+#include <NXP/crp.h>
+
+// Variable to store CRP value in. Will be placed automatically
+// by the linker when "Enable Code Read Protect" selected.
+// See crp.h header for more information
+__CRP const unsigned int CRP_WORD = CRP_NO_CRP ;
+
+// TODO: insert other include files here
+
+/*Includes de la C-API*/
+#include "GPIO.h"
+#include "lpc_176X_PinNames.h"
+#include "lpc_176X_PeriphNames.h"
+
+
+
+GPIO led;
+int tiempo_de_diagnostico;
+
+static void setupHardware(void)
+{
+	GPIO_Init(&led, SALIDA, ALTO, GPIO__0_22);
+}
+
+int main(void) {
+	
+	// TODO: insert code here
+
+	//Incialización del Hardware
+	setupHardware();
+
+	while(1);
+}
+
+void HardFault_Handler(void)
+{
+   while(1)
+   {
+	//vPrintString("!!!!!!!!!!! Hard Fault !!!!!!!!!!!!!\n");
+   }
+}
